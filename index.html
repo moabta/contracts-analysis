@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة معلومات مؤشرات التوريد</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .percentage {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .percentage.good { color: #27ae60; }
+        .percentage.warning { color: #f39c12; }
+        .percentage.danger { color: #e74c3c; }
+
+        .filters {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .filters label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .filters input, .filters select {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .table-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .table-header h2 {
+            color: #333;
+            font-size: 1.8rem;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: #34495e;
+            color: white;
+            padding: 15px;
+            text-align: right;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            text-align: right;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-fill.delivered {
+            background: #27ae60;
+        }
+
+        .progress-fill.delayed {
+            background: #e74c3c;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .chart-container:first-of-type {
+            max-width: 600px;
+            margin: 30px auto;
+        }
+
+        .chart-container h3 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .chart-container:nth-of-type(2) .chart-wrapper {
+            height: 600px;
+        }
+
+        #performanceChart, #delayChart {
+            max-width: 100%;
+            height: 100%;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .status-badge.high { background: #d4edda; color: #155724; }
+        .status-badge.medium { background: #fff3cd; color: #856404; }
+        .status-badge.low { background: #f8d7da; color: #721c24; }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            table {
+                font-size: 0.9rem;
+            }
+            
+            td, th {
+                padding: 8px;
+            }
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+            font-size: 1.2rem;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>لوحة معلومات مؤشرات التوريد  ادارة التموين الطبي بالمدينة المنورة</h1>
+            <p>متابعة شاملة لأداء 31 عقد توريد</p>
+            <p style="color: #888; font-size: 0.95rem; margin-top: 10px;">إلى تاريخ 28/06/2025</p>
+            <p style="color: #666; font-size: 0.9rem; margin-top: 15px; font-weight: bold;">إعداد: محمد المحمدي</p>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+            <!-- سيتم ملؤها بواسطة JavaScript -->
+        </div>
+
+        <div class="filters">
+            <label>اختر المناقصة:</label>
+            <select id="tenderSelect">
+                <option value="">جميع المناقصات</option>
+            </select>
+            
+            <label>تصفية حسب الأداء:</label>
+            <select id="performanceFilter">
+                <option value="">جميع العقود</option>
+                <option value="high">أداء عالي (>75%)</option>
+                <option value="medium">أداء متوسط (50-75%)</option>
+                <option value="low">أداء منخفض (<50%)</option>
+                <option value="critical">تعثر حرج (>50% تعثر)</option>
+            </select>
+            
+            <label>البحث برقم العقد:</label>
+            <input type="text" id="contractSearchInput" placeholder="ابحث برقم العقد...">
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h2>تفاصيل العقود</h2>
+            </div>
+            <div class="table-wrapper">
+                <table id="contractsTable">
+                    <thead>
+                        <tr>
+                            <th>م</th>
+                            <th>مسمى المناقصة</th>
+                            <th>رقم العقد</th>
+                            <th>إجمالي الدفعات</th>
+                            <th>الدفعات المورده</th>
+                            <th>الدفعات المتبقية</th>
+                            <th>الدفعات المتعثرة</th>
+                            <th>نسبة التوريد</th>
+                            <th>نسبة التعثر</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contractsTableBody">
+                        <!-- سيتم ملؤها بواسطة JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3>توزيع العقود حسب الأداء</h3>
+            <div class="chart-wrapper">
+                <canvas id="performanceChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3>أعلى 10 عقود من حيث التعثر</h3>
+            <div class="chart-wrapper">
+                <canvas id="delayChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // بيانات العقود
+        const contractsData = [
+            {
+                name: "مناقصة الأدوية نوبكو 2024 م",
+                contractNo: "2023100032001",
+                totalPayments: 4584,
+                delivered: 1996.40,
+                remaining: 2587.60,
+                delayed: 394.16,
+                deliveredPercent: 43.60,
+                remainingPercent: 56.40,
+                delayedPercent: 8.60
+            },
+            {
+                name: "مناقصة الكيماويات نوبكو 2024 م",
+                contractNo: "2023100033001",
+                totalPayments: 96,
+                delivered: 42.12,
+                remaining: 53.88,
+                delayed: 1.45,
+                deliveredPercent: 43.90,
+                remainingPercent: 56.10,
+                delayedPercent: 1.50
+            },
+            {
+                name: "مناقصة الأمصال واللقاحات نوبكو 2024 م",
+                contractNo: "2023100036001",
+                totalPayments: 156,
+                delivered: 67.65,
+                remaining: 88.35,
+                delayed: 8.92,
+                deliveredPercent: 43.40,
+                remainingPercent: 56.60,
+                delayedPercent: 5.70
+            },
+            {
+                name: "مناقصة ملحق الادوية لعام 2023 عدد 22 بند",
+                contractNo: "2023100239001",
+                totalPayments: 48,
+                delivered: 3.69,
+                remaining: 44.31,
+                delayed: 17.31,
+                deliveredPercent: 7.70,
+                remainingPercent: 92.30,
+                delayedPercent: 36.10
+            },
+            {
+                name: "البنود الالحاقية لمناقصة الأدوية نوبكو 2024 م",
+                contractNo: "2024100064001",
+                totalPayments: 30,
+                delivered: 9.99,
+                remaining: 20.01,
+                delayed: 4.00,
+                deliveredPercent: 33.30,
+                remainingPercent: 66.70,
+                delayedPercent: 13.30
+            },
+            {
+                name: "مناقصة بنود الادوية المجزئة نوبكو 2024",
+                contractNo: "2024100105001",
+                totalPayments: 216,
+                delivered: 36.98,
+                remaining: 179.02,
+                delayed: 36.02,
+                deliveredPercent: 17.10,
+                remainingPercent: 82.90,
+                delayedPercent: 16.70
+            },
+            {
+                name: "منافسة الرعاية المنزلية والتغذية الأنبوبية نوبكو 2021 م",
+                contractNo: "2022100110001",
+                totalPayments: 276,
+                delivered: 139.94,
+                remaining: 136.06,
+                delayed: 90.06,
+                deliveredPercent: 50.70,
+                remainingPercent: 49.30,
+                delayedPercent: 32.60
+            },
+            {
+                name: "منافسة الأغذية للأمراض الاستقلابية نوبكو 2021 م",
+                contractNo: "2022100112001",
+                totalPayments: 22,
+                delivered: 17.24,
+                remaining: 4.76,
+                delayed: 4.76,
+                deliveredPercent: 78.40,
+                remainingPercent: 21.60,
+                delayedPercent: 21.60
+            },
+            {
+                name: "مناقصة تأمين أغذية حساسية القمح نوبكو2021م",
+                contractNo: "2022100113001",
+                totalPayments: 12,
+                delivered: 11.97,
+                remaining: 0.03,
+                delayed: 0.03,
+                deliveredPercent: 99.80,
+                remainingPercent: 0.20,
+                delayedPercent: 0.20
+            },
+            {
+                name: "منافسة الرعاية المنزلية والتغذية الأنبوبية التجزئة 2021 رقم (1)",
+                contractNo: "2022100260001",
+                totalPayments: 84,
+                delivered: 53.83,
+                remaining: 30.17,
+                delayed: 16.17,
+                deliveredPercent: 64.10,
+                remainingPercent: 35.90,
+                delayedPercent: 19.30
+            },
+            {
+                name: "منافسة الرعاية المنزلية والتغذية الأنبوبية 2021 التجزئة رقم (2)",
+                contractNo: "2022100261001",
+                totalPayments: 24,
+                delivered: 10.12,
+                remaining: 13.88,
+                delayed: 9.88,
+                deliveredPercent: 42.20,
+                remainingPercent: 57.80,
+                delayedPercent: 41.20
+            },
+            {
+                name: "منافسة الأغذية للأمراض الاستقلابية نوبكو 2021 التجزئة (1)",
+                contractNo: "2022100266001",
+                totalPayments: 3,
+                delivered: 0.37,
+                remaining: 2.63,
+                delayed: 2.63,
+                deliveredPercent: 12.30,
+                remainingPercent: 87.70,
+                delayedPercent: 87.70
+            },
+            {
+                name: "مناقصة تأمين عدد (3) بنود التغذية الوريدية (1)",
+                contractNo: "2022100295001",
+                totalPayments: 3,
+                delivered: 0.00,
+                remaining: 3.00,
+                delayed: 1.00,
+                deliveredPercent: 0.00,
+                remainingPercent: 100.00,
+                delayedPercent: 33.30
+            },
+            {
+                name: "مناقصة تأمين عدد (3) بنود التغذية الوريدية (2)",
+                contractNo: "2022100296001",
+                totalPayments: 1,
+                delivered: 0.00,
+                remaining: 1.00,
+                delayed: 1.00,
+                deliveredPercent: 0.00,
+                remainingPercent: 100.00,
+                delayedPercent: 100.00
+            },
+            {
+                name: "Dermatology Tender Nupco 2024",
+                contractNo: "2023100326001",
+                totalPayments: 45,
+                delivered: 13.35,
+                remaining: 31.65,
+                delayed: 16.65,
+                deliveredPercent: 29.70,
+                remainingPercent: 70.30,
+                delayedPercent: 37.00
+            },
+            {
+                name: "Nephro Tender Nupco 2024",
+                contractNo: "2023100323001",
+                totalPayments: 222,
+                delivered: 67.44,
+                remaining: 154.56,
+                delayed: 89.56,
+                deliveredPercent: 30.40,
+                remainingPercent: 69.60,
+                delayedPercent: 40.30
+            },
+            {
+                name: "Sterilization Tender Nupco 2024",
+                contractNo: "2023100328001",
+                totalPayments: 318,
+                delivered: 53.49,
+                remaining: 264.51,
+                delayed: 164.49,
+                deliveredPercent: 16.80,
+                remainingPercent: 83.20,
+                delayedPercent: 51.70
+            },
+            {
+                name: "منافسة الحاقية (3 بنود) لمنافسة الكساوي 2021م",
+                contractNo: "20220010000187",
+                totalPayments: 30,
+                delivered: 26.59,
+                remaining: 3.41,
+                delayed: 3.41,
+                deliveredPercent: 88.60,
+                remainingPercent: 11.40,
+                delayedPercent: 11.40
+            },
+            {
+                name: "منافسة الغازات الطبية نوبكو 2022",
+                contractNo: "2022100016001",
+                totalPayments: 24,
+                delivered: 7.41,
+                remaining: 16.59,
+                delayed: 16.59,
+                deliveredPercent: 30.90,
+                remainingPercent: 69.10,
+                delayedPercent: 69.10
+            },
+            {
+                name: "مناقصة لوازم تجهيز المستشفيات الالحاقية 2023 -نوبكو",
+                contractNo: "2023100106001",
+                totalPayments: 274,
+                delivered: 34.24,
+                remaining: 239.76,
+                delayed: 239.76,
+                deliveredPercent: 12.50,
+                remainingPercent: 87.50,
+                delayedPercent: 87.50
+            },
+            {
+                name: "منافسة الكميات الملحقة بالمنافسة الأساسية للمختبرات 61-22",
+                contractNo: "2024100004001",
+                totalPayments: 591,
+                delivered: 95.25,
+                remaining: 495.75,
+                delayed: 144.75,
+                deliveredPercent: 16.10,
+                remainingPercent: 83.90,
+                delayedPercent: 24.50
+            },
+            {
+                name: "منافسة تامين اشرطة واجهزة قياس السكر بالدم لمرضى دا ء السكري لثلاث سنوات",
+                contractNo: "2022100198001",
+                totalPayments: 36,
+                delivered: 16.39,
+                remaining: 19.61,
+                delayed: 13.61,
+                deliveredPercent: 45.50,
+                remainingPercent: 54.50,
+                delayedPercent: 37.80
+            },
+            {
+                name: "منافسة تأمين20% اشرطة واجهزة قياس السكر بالدم للمرضى3سنوات",
+                contractNo: "2022100227001",
+                totalPayments: 36,
+                delivered: 16.00,
+                remaining: 20.00,
+                delayed: 14.00,
+                deliveredPercent: 44.40,
+                remainingPercent: 55.60,
+                delayedPercent: 38.90
+            },
+            {
+                name: "مناقصة المختبرات العامه نوبكو 2022",
+                contractNo: "2022100285003",
+                totalPayments: 12813,
+                delivered: 7781.80,
+                remaining: 5031.20,
+                delayed: 295.20,
+                deliveredPercent: 60.70,
+                remainingPercent: 39.30,
+                delayedPercent: 2.30
+            },
+            {
+                name: "مناقصة تأمين بنود مشتقات الدم نوبكو 2024 م رقم (1)",
+                contractNo: "2024100069001",
+                totalPayments: 12,
+                delivered: 6.00,
+                remaining: 6.00,
+                delayed: 0.00,
+                deliveredPercent: 50.00,
+                remainingPercent: 50.00,
+                delayedPercent: 0.00
+            },
+            {
+                name: "مناقصة تأمين بنود مشتقات الدم نوبكو 2024 م رقم (2)",
+                contractNo: "2024100070001",
+                totalPayments: 6,
+                delivered: 3.00,
+                remaining: 3.00,
+                delayed: 0.00,
+                deliveredPercent: 50.00,
+                remainingPercent: 50.00,
+                delayedPercent: 0.00
+            },
+            {
+                name: "مناقصة بدائل حليب الأم نوبكو 2021 م",
+                contractNo: "2022100109001",
+                totalPayments: 696,
+                delivered: 323.82,
+                remaining: 372.18,
+                delayed: 256.18,
+                deliveredPercent: 46.50,
+                remainingPercent: 53.50,
+                delayedPercent: 36.80
+            },
+            {
+                name: "مناقصة بدائل حليب الأم 2021 التجزئة رقم (1)",
+                contractNo: "2022100243001",
+                totalPayments: 204,
+                delivered: 96.29,
+                remaining: 107.71,
+                delayed: 73.91,
+                deliveredPercent: 47.20,
+                remainingPercent: 52.80,
+                delayedPercent: 36.20
+            },
+            {
+                name: "مناقصة بدائل حليب الأم تجزئة (3)",
+                contractNo: "2022100245001",
+                totalPayments: 72,
+                delivered: 28.77,
+                remaining: 43.23,
+                delayed: 31.23,
+                deliveredPercent: 40.00,
+                remainingPercent: 60.00,
+                delayedPercent: 43.40
+            },
+            {
+                name: "مناقصة بدائل حليب الأم تجزئة (4)",
+                contractNo: "2022100246001",
+                totalPayments: 60,
+                delivered: 12.30,
+                remaining: 47.70,
+                delayed: 37.70,
+                deliveredPercent: 20.50,
+                remainingPercent: 79.50,
+                delayedPercent: 62.80
+            },
+            {
+                name: "مناقصة بدائل حليب الم التجزئة (2)",
+                contractNo: "2022100244001",
+                totalPayments: 120,
+                delivered: 55.07,
+                remaining: 64.93,
+                delayed: 44.93,
+                deliveredPercent: 45.90,
+                remainingPercent: 54.10,
+                delayedPercent: 37.40
+            }
+        ];
+
+        // حساب الإحصائيات الإجمالية
+        function calculateTotalStats() {
+            let totals = {
+                totalPayments: 0,
+                totalDelivered: 0,
+                totalRemaining: 0,
+                totalDelayed: 0
+            };
+
+            contractsData.forEach(contract => {
+                totals.totalPayments += contract.totalPayments;
+                totals.totalDelivered += contract.delivered;
+                totals.totalRemaining += contract.remaining;
+                totals.totalDelayed += contract.delayed;
+            });
+
+            totals.overallDeliveredPercent = (totals.totalDelivered / totals.totalPayments * 100).toFixed(1);
+            totals.overallRemainingPercent = (totals.totalRemaining / totals.totalPayments * 100).toFixed(1);
+            totals.overallDelayedPercent = (totals.totalDelayed / totals.totalPayments * 100).toFixed(1);
+
+            return totals;
+        }
+
+        // عرض الإحصائيات العامة
+        function displayStats() {
+            const stats = calculateTotalStats();
+            const statsGrid = document.getElementById('statsGrid');
+            
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <h3>إجمالي العقود</h3>
+                    <div class="value">31</div>
+                    <div class="percentage">عقد نشط</div>
+                </div>
+                <div class="stat-card">
+                    <h3>إجمالي الدفعات</h3>
+                    <div class="value">${stats.totalPayments.toLocaleString()}</div>
+                    <div class="percentage">دفعة</div>
+                </div>
+                <div class="stat-card">
+                    <h3>الدفعات المورّدة</h3>
+                    <div class="value">${stats.totalDelivered.toFixed(0).toLocaleString()}</div>
+                    <div class="percentage good">${stats.overallDeliveredPercent}%</div>
+                </div>
+                <div class="stat-card">
+                    <h3>الدفعات المتبقية</h3>
+                    <div class="value">${stats.totalRemaining.toFixed(0).toLocaleString()}</div>
+                    <div class="percentage warning">${stats.overallRemainingPercent}%</div>
+                </div>
+                <div class="stat-card">
+                    <h3>الدفعات المتعثرة</h3>
+                    <div class="value">${stats.totalDelayed.toFixed(0).toLocaleString()}</div>
+                    <div class="percentage danger">${stats.overallDelayedPercent}%</div>
+                </div>
+                <div class="stat-card">
+                    <h3>معدل الإنجاز العام</h3>
+                    <div class="value">${stats.overallDeliveredPercent}%</div>
+                    <div class="percentage ${stats.overallDeliveredPercent > 60 ? 'good' : stats.overallDeliveredPercent > 40 ? 'warning' : 'danger'}">من إجمالي العقود</div>
+                </div>
+            `;
+        }
+
+        // تحديد حالة العقد
+        function getContractStatus(deliveredPercent, delayedPercent) {
+            if (deliveredPercent > 75) return { text: 'أداء عالي', class: 'high' };
+            if (delayedPercent > 50) return { text: 'تعثر حرج', class: 'low' };
+            if (deliveredPercent >= 50) return { text: 'أداء متوسط', class: 'medium' };
+            return { text: 'أداء منخفض', class: 'low' };
+        }
+
+        // عرض جدول العقود
+        function displayContracts(contracts = contractsData) {
+            const tbody = document.getElementById('contractsTableBody');
+            
+            if (contracts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="no-results">لا توجد نتائج</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = contracts.map((contract, index) => {
+                const status = getContractStatus(contract.deliveredPercent, contract.delayedPercent);
+                return `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${contract.name}</td>
+                        <td>${contract.contractNo}</td>
+                        <td>${contract.totalPayments.toLocaleString()}</td>
+                        <td>${contract.delivered.toFixed(2)}</td>
+                        <td>${contract.remaining.toFixed(2)}</td>
+                        <td>${contract.delayed.toFixed(2)}</td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill delivered" style="width: ${contract.deliveredPercent}%">
+                                    <span class="progress-text">${contract.deliveredPercent}%</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="progress-bar">
+                                <div class="progress-fill delayed" style="width: ${contract.delayedPercent}%">
+                                    <span class="progress-text">${contract.delayedPercent}%</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="status-badge ${status.class}">${status.text}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ملء قائمة المناقصات
+        function populateTenderSelect() {
+            const tenderSelect = document.getElementById('tenderSelect');
+            
+            // الحصول على أسماء المناقصات الفريدة
+            const uniqueTenders = [...new Set(contractsData.map(contract => contract.name))];
+            
+            // ترتيب الأسماء أبجدياً
+            uniqueTenders.sort((a, b) => a.localeCompare(b, 'ar'));
+            
+            // إضافة الخيارات للقائمة المنسدلة
+            uniqueTenders.forEach(tenderName => {
+                const option = document.createElement('option');
+                option.value = tenderName;
+                option.textContent = tenderName;
+                tenderSelect.appendChild(option);
+            });
+        }
+
+        // فلترة العقود
+        function filterContracts() {
+            const selectedTender = document.getElementById('tenderSelect').value;
+            const contractSearchTerm = document.getElementById('contractSearchInput').value.toLowerCase();
+            const performanceFilter = document.getElementById('performanceFilter').value;
+            
+            let filtered = contractsData.filter(contract => {
+                // فلترة حسب اسم المناقصة
+                const matchesTender = !selectedTender || contract.name === selectedTender;
+                
+                // فلترة حسب رقم العقد
+                const matchesContract = !contractSearchTerm || 
+                                      contract.contractNo.toLowerCase().includes(contractSearchTerm);
+                
+                if (!matchesTender || !matchesContract) return false;
+                
+                // فلترة حسب الأداء
+                if (!performanceFilter) return true;
+                
+                switch(performanceFilter) {
+                    case 'high':
+                        return contract.deliveredPercent > 75;
+                    case 'medium':
+                        return contract.deliveredPercent >= 50 && contract.deliveredPercent <= 75;
+                    case 'low':
+                        return contract.deliveredPercent < 50;
+                    case 'critical':
+                        return contract.delayedPercent > 50;
+                    default:
+                        return true;
+                }
+            });
+            
+            displayContracts(filtered);
+            updateFilteredStats(filtered);
+        }
+
+        // تحديث الإحصائيات المفلترة
+        function updateFilteredStats(filteredContracts) {
+            if (filteredContracts.length === 0) {
+                displayStats();
+                return;
+            }
+            
+            let totals = {
+                totalPayments: 0,
+                totalDelivered: 0,
+                totalRemaining: 0,
+                totalDelayed: 0
+            };
+
+            filteredContracts.forEach(contract => {
+                totals.totalPayments += contract.totalPayments;
+                totals.totalDelivered += contract.delivered;
+                totals.totalRemaining += contract.remaining;
+                totals.totalDelayed += contract.delayed;
+            });
+
+            totals.overallDeliveredPercent = totals.totalPayments > 0 ? 
+                (totals.totalDelivered / totals.totalPayments * 100).toFixed(1) : 0;
+            totals.overallRemainingPercent = totals.totalPayments > 0 ? 
+                (totals.totalRemaining / totals.totalPayments * 100).toFixed(1) : 0;
+            totals.overallDelayedPercent = totals.totalPayments > 0 ? 
+                (totals.totalDelayed / totals.totalPayments * 100).toFixed(1) : 0;
+
+            const statsGrid = document.getElementById('statsGrid');
+            
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <h3>العقود المعروضة</h3>
+                    <div class="value">${filteredContracts.length}</div>
+                    <div class="percentage">من أصل 31 عقد</div>
+                </div>
+                <div class="stat-card">
+                    <h3>إجمالي الدفعات</h3>
+                    <div class="value">${totals.totalPayments.toLocaleString()}</div>
+                    <div class="percentage">دفعة</div>
+                </div>
+                <div class="stat-card">
+                    <h3>الدفعات المورّدة</h3>
+                    <div class="value">${totals.totalDelivered.toFixed(0).toLocaleString()}</div>
+                    <div class="percentage good">${totals.overallDeliveredPercent}%</div>
+                </div>
+                <div class="stat-card">
+                    <h3>الدفعات المتبقية</h3>
+                    <div class="value">${totals.totalRemaining.toFixed(0).toLocaleString()}</div>
+                    <div class="percentage warning">${totals.overallRemainingPercent}%</div>
+                </div>
+                <div class="stat-card">
+                    <h3>الدفعات المتعثرة</h3>
+                    <div class="value">${totals.totalDelayed.toFixed(0).toLocaleString()}</div>
+                    <div class="percentage danger">${totals.overallDelayedPercent}%</div>
+                </div>
+                <div class="stat-card">
+                    <h3>معدل الإنجاز</h3>
+                    <div class="value">${totals.overallDeliveredPercent}%</div>
+                    <div class="percentage ${totals.overallDeliveredPercent > 60 ? 'good' : totals.overallDeliveredPercent > 40 ? 'warning' : 'danger'}">للعقود المعروضة</div>
+                </div>
+            `;
+        }
+
+        // متغير لتخزين مثيلات الرسوم البيانية
+        let performanceChartInstance = null;
+        let delayChartInstance = null;
+
+        // إنشاء الرسوم البيانية
+        function createCharts() {
+            // تدمير الرسوم البيانية السابقة إن وجدت
+            if (performanceChartInstance) {
+                performanceChartInstance.destroy();
+            }
+            if (delayChartInstance) {
+                delayChartInstance.destroy();
+            }
+            
+            // رسم بياني لتوزيع الأداء
+            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+            
+            const performanceCategories = {
+                high: contractsData.filter(c => c.deliveredPercent > 75).length,
+                medium: contractsData.filter(c => c.deliveredPercent >= 50 && c.deliveredPercent <= 75).length,
+                low: contractsData.filter(c => c.deliveredPercent < 50).length
+            };
+            
+            performanceChartInstance = new Chart(performanceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['أداء عالي (>75%)', 'أداء متوسط (50-75%)', 'أداء منخفض (<50%)'],
+                    datasets: [{
+                        data: [performanceCategories.high, performanceCategories.medium, performanceCategories.low],
+                        backgroundColor: ['#27ae60', '#f39c12', '#e74c3c'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 0
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: {
+                                    size: 14,
+                                    family: 'Segoe UI'
+                                },
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return context.label + ': ' + context.parsed + ' عقد (' + percentage + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // رسم بياني لأعلى عقود متعثرة
+            const delayCtx = document.getElementById('delayChart').getContext('2d');
+            
+            const topDelayedContracts = [...contractsData]
+                .sort((a, b) => b.delayedPercent - a.delayedPercent)
+                .slice(0, 10);
+            
+            delayChartInstance = new Chart(delayCtx, {
+                type: 'bar',
+                data: {
+                    labels: topDelayedContracts.map(c => c.name),
+                    datasets: [{
+                        label: 'نسبة التعثر %',
+                        data: topDelayedContracts.map(c => c.delayedPercent),
+                        backgroundColor: topDelayedContracts.map(c => 
+                            c.delayedPercent > 50 ? '#e74c3c' : 
+                            c.delayedPercent > 30 ? '#f39c12' : '#95a5a6'
+                        ),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    animation: {
+                        duration: 0
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'نسبة التعثر: ' + context.parsed.x + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                maxRotation: 0,
+                                minRotation: 0,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    },
+                    layout: {
+                        padding: {
+                            left: 10,
+                            right: 10
+                        }
+                    }
+                }
+            });
+        }
+
+        // تهيئة الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            displayStats();
+            displayContracts();
+            populateTenderSelect();
+            
+            setTimeout(() => {
+                createCharts();
+            }, 100);
+            
+            // إضافة مستمعي الأحداث
+            document.getElementById('tenderSelect').addEventListener('change', filterContracts);
+            document.getElementById('contractSearchInput').addEventListener('input', filterContracts);
+            document.getElementById('performanceFilter').addEventListener('change', filterContracts);
+        });
+    </script>
+</body>
+</html>
